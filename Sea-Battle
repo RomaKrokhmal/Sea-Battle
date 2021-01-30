@@ -1,0 +1,861 @@
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <vector>
+#include <cstdio>
+#include <stack>
+#include <fstream>
+#include <errno.h>
+#include <conio.h>
+#include <math.h>
+#include <string.h>
+#include <windows.h>
+#include <dos.h>
+using namespace std;
+const int N = 10;
+const int NUM_SHIPS = 9;
+int Ships_id = 1;
+int Ships[10] = {0};
+
+int chek_coord(int x, int y);
+
+void set_rand_ships(int map[N][N], int size_ship, int ship_id); //  функція яка випадково розставляж кораблі
+
+void map_show(int map[N][N], int mask[N][N],bool useMask);      //  фунція яка показує ігрове поле
+
+void gotoxy (int x, int y);                                     //  функція яка допомагає реалізувати ручну розстановку кораблів
+
+void ship_show(int x, int y, int dir, int size_ship);			//  функція яка виводить на екран корабель при ручній розстановці
+
+bool ship_in_map(int x,int y,int dir,int size_ship);			//  функція контролю карти
+
+bool set_ship(int map[N][N], int x, int y, int dir, int size_ship); //  ручна розстановка 
+
+int shot(int map[N][N], int x, int y,int ships[NUM_SHIPS+1], int mask[N][N]); //  функція яка реалізує "постріл"
+
+
+
+int main() 
+{
+    setlocale(LC_ALL, "ukr");
+	srand(time(NULL));
+	while(true)
+	{
+	    
+	    int map [N][N] = {0};
+	    int map2 [N][N] = {0};
+	    
+	    int mask [N][N] = {0};
+	    int mask2 [N][N] = {0};
+	    
+	    int ships1[NUM_SHIPS+1] = {0,4, 3, 3, 2, 2, 2, 1, 1, 1};
+	    int ships2[NUM_SHIPS+1] = {0,4, 3, 3, 2, 2, 2, 1, 1, 1};
+	    
+
+    	 for(int i = 1; i <= NUM_SHIPS;  i++)
+	    {
+	        set_rand_ships(map2,ships2[i], i);  // автоматична розстановка кораблів
+	    }
+   
+	    int x = 0;
+	    int y = 0;
+	        
+	    int firstHitX = 0;
+	    int firstHitY = 0; 
+	    
+	    int mode = 0;
+	    
+	    int xBot = 0;
+	    int yBot = 0;
+	    
+	    int dir = 0;
+	    
+	    vector <int> dirs;
+	    
+	    dirs.push_back(3);
+	    dirs.push_back(2);
+	    dirs.push_back(1);
+	    dirs.push_back(0);
+	    int z = 1;
+	    int choice = 0;
+	    int choice2 = 0;
+    
+        		cout << "                        Морський бiй" << endl;
+        do{
+    			cout << "Клавiша 1 - автоматинна розстановка 2 - поставити кораблi вручну" << endl;
+    			cout << "Роботу програми можна завершити в будь-який момент, для цього натиснiть клавiшу Esc" << endl;
+				choice = getch();
+    	  }while (choice != 49 && choice!= 50);    	
+    	
+    	if(choice == 49)
+    	{       
+    	    cout << "Автоматичне розсташування:" << endl;
+            Sleep(1000);
+            system("cls");
+            
+    	         for(int i = 1; i <= NUM_SHIPS;  i++)
+	            {
+	             set_rand_ships(map,ships1[i], i);
+	            } 
+	            map_show(map, mask, 0);
+	             
+	            while (choice2 != 13)
+	            {
+	                 cout << endl << "Enter - почати гру, або натиснiть будь яку iншу клавiшу для змiни розстановки" << endl;
+	                 choice2 = getch();
+	                 system("cls");
+	                 if (choice2 == 13 )
+	                 {
+	                     break;
+	                 }
+	                 for(int i = 0; i < N; i++)
+	                 {
+	                     for(int j = 0; j < N; j++)
+	                     {
+	                           map [i][j] = 0;
+	                     }
+	                 }
+	            
+	                 for(int i = 1; i <= NUM_SHIPS;  i++)
+	                     {
+	                     set_rand_ships(map,ships1[i], i);
+	                     } 
+	                    map_show(map, mask, 0);	                    
+    	        }  
+    	}  	  	
+    	    	
+    	else if (choice == 50)
+		{
+    	    system("cls");
+    	    cout << "За допомогою стрiлок розсташуйте корабель згiдно правил морського боя" << endl;
+    	    cout << " Натиснiть клавiшу 1 щоб перевернути корабель,  Еnter - щоб поставити його" << endl;
+    	    Sleep(6000);
+    	    system("cls");
+    	    while(z <= NUM_SHIPS)
+			{
+           
+	           		 map_show(map, mask,0);            
+	            	 ship_show(x, y, dir, ships1 [z]);
+	            
+	           		 int temp_x = x;
+	           		 int temp_y = y;
+	           		 int temp_dir = dir;
+	            
+	           		 int ch = _getch();
+	            // Пiсля натиснення певної клавіші
+	            switch(ch)
+	            {
+	                case 77:    // врпаво
+	                x++;
+	                break;
+	                case 80:   //  вниз 
+	                y++;
+	                break;
+	                case 75:   //  вліво
+	                x--;
+	                break;
+	                case 72:
+	                y--;       //  вверх
+	                break;
+	                case 49:   //   1-обертання на 90 градусів
+	                dir = !dir;
+	                break;
+	                case 13:   // enter поставити корабель
+	                
+	                if(set_ship(map,x, y, dir, ships1 [z]))
+	                {
+	                     x = 0 ;
+	                     y = 0;
+	                     dir = 0;
+	                    z++;
+	                }
+	                break;
+	            }
+	            
+	            if(!ship_in_map(x, y, dir, ships1 [z]))
+	            {
+	             x = temp_x;
+	             y = temp_y;
+	             dir = temp_dir;
+	            }          
+	            
+	            system("cls");	            
+        	}    	    
+    	}
+    	system("cls");    
+
+        bool winHuman = 0;
+        bool winBot = 0;
+        bool turn = 1; 		// якщо 1 - перший хід людини
+      
+	  while(winHuman == false && winBot == false)
+        {
+            int resultShot = 0;
+             do
+             {
+                      map_show(map, mask, 0);
+                      cout << endl;
+                      map_show(map2, mask2, 1);                 
+                                        
+                      if(turn == 1)
+                      {     while(true)
+					 		   {							               								  
+	                 			cout << endl << "Введiть координати цiлi: " << endl;
+	                 			cout << "X = ";
+	                 			x = getch();
+	                 			
+	                 			if(x == 27)
+								 {
+	                 				winBot = true;
+									break;
+								 }
+								cout << x - 48;
+	                 			cout << endl << "Y = ";
+	                 			y = getch();            			
+								if(y == 27)
+								 {
+	                 				winBot = true;
+									break;
+								 }
+								 cout << y - 48 << endl;
+									 if(chek_coord(x, y) == 1)
+									{
+										x = x - 48;	
+										y = y - 48;										            
+										break;	
+									}									     			
+	                 			}
+	                 			
+		                 			if(	winBot == true)
+		                 			 {
+		                 				break;
+									 }	                 			
+                 			resultShot = shot( map2,  x,  y, ships2,  mask2);  //В результаті роботи функції програма працбє по різному
+                 
+                		 	if(resultShot == 1)
+                     	 	{
+                     		 cout << "Ранив" << endl;
+                     	 	}
+         
+                     	 	else if(resultShot == 2)
+                    	 	{
+                         		bool died = 1;
+                         		for(int i = 1; i <= NUM_SHIPS;  i++)
+	                 	      {
+	                    		 if(ships2[i] != 0 )
+	                    		 {
+	                       		 died = 0;
+	                       		 break;
+	                     		 }
+	                 		  }                         
+                        		if (died == 1)
+                        		{
+                            	winHuman = 1;
+                            	break;
+                        		}                         
+                        		cout << "Вбив" << endl;
+                     		}
+	                     		else if(resultShot == 3)
+	                     	{
+	                        	cout <<endl << "Координати введенi не вiрно" <<endl;
+	                     	} 
+                     	else 
+                     	{
+                        	cout << "Промах" <<endl;
+                     	}         
+                    		Sleep(2000);
+                      }
+                      
+                      //Хід бота починається тут, бот працює в 2 режимах 0 - шукання кораблів, 1 - при влученні описана логіка при якій бот повністю вбиває корабель в який влучив
+         	     else
+         		 {
+          			cout << endl << "Хiд комп'ютера" << endl;    
+         			Sleep (1000);
+                             
+         			if(mode == 0) // 0 режим роботи бота
+        			{
+            			do
+            			{
+           					xBot = rand() %N;
+            				yBot = rand() %N;
+            				
+							cout << "X = " << xBot << endl;  
+							cout << "Y = " << yBot << endl;
+							
+				            Sleep(1000);
+				            resultShot = shot( map,  xBot,  yBot, ships1,  mask);
+				                 if(resultShot == 3)
+		                     	{
+		                        	cout << "Навiть бот iнодi помиляється" <<endl;
+		                     	}
+		                     	
+           				} while(resultShot == 3 );
+           				
+                     if(resultShot == 1)	 //Результат попадання
+                     {
+                         mode = 1;
+                         
+                         firstHitX = xBot;
+                         firstHitY = yBot;                
+                
+                            if(!dirs.empty())
+                            {                    
+                             dir = dirs[dirs.size() - 1];
+                             dirs.pop_back();                
+                            }
+                     		cout << "Ранив" << endl;
+                      }
+         
+         
+                     else if(resultShot == 2)	//Результат повного знищення корабля
+                     {
+                         bool died = 1;
+                         for(int i = 1; i <= NUM_SHIPS;  i++)
+	                     	{
+	                     		if(ships1[i] != 0 )
+	                    		 {
+			                        died = 0;
+			                        break;
+			                     }
+	                	 	}
+                         
+		                        if (died == 1)
+		                        {
+		                            winBot = 1;
+		                            break;
+		                        }                         
+                       		 		cout << "Вбив" << endl;
+                     }
+                     
+	                
+                     else 
+                     {
+                        cout << "Промах" <<endl;
+                     }
+         				Sleep(1000);            
+       				 }
+        
+        
+			        else if(mode == 1) // Переключення режиму роботи бота
+			        {
+				            bool changeDir = 0;
+				            if (dir == 0) 			//Спочатку бот стріляє ліворуч
+				            {
+				                if(xBot > 0)
+				                     xBot--;
+				                else
+				                {
+				                        changeDir = 1;
+				                }
+				            }
+	                        
+				            else if (dir == 1) 	// Потім вправо
+				            {
+				                if(xBot < N-1)
+				                    xBot++;		                    
+				                else
+				                {
+				                        changeDir = 1;		                        
+				                }
+				            }  
+							         
+				            else if (dir == 2) 	// Потім вверх
+				            {
+				                if(yBot > 0)
+				                    yBot--;			                    
+				                else
+				                {
+				                        changeDir = 1;			                        
+				                }
+				            }    
+				            
+			                else if (dir == 3) // Потім вниз
+			            	{
+				                if(yBot < N-1)
+				                    yBot++;			                    
+				                else
+				                {
+				                        changeDir = 1;			                        
+				                }
+				            }  
+			            
+			            
+			            if (changeDir == 1)   // Якщо на шляху  боту буде наприклад край ігрового поля, він автоматично змінить напрямок стрільби
+			            {
+			                    if(!dirs.empty())
+			                	{
+			                    dir = dirs[dirs.size() - 1]; //Переключання напрямку стрільби за допомогою векторів
+			                    dirs.pop_back();
+			               	    }
+			                        
+				                xBot = firstHitX;
+				                yBot = firstHitY;
+				                continue;
+			            }
+	            
+	             		 cout << "X = " << xBot << endl;  
+	                     cout << "Y = " << yBot << endl;  //Виведення на екран вибору бота
+	                     
+	                     Sleep(1000);
+	                   	 resultShot = shot( map,  xBot,  yBot, ships1,  mask);  // Постріл бота та результат роботи програми залежно від результату
+	            
+	                     if(resultShot == 1)
+	                     {
+	                     cout << "Ранив" << endl;
+	                     }         
+	         
+	                     else if(resultShot == 2)  // Коли бот повністю знищить корабель потрібно знову включити 0 режим його роботи на змінити напрямлення векторів
+	                     {
+	                        mode = 0;                        
+	                            dirs.clear();
+	                            
+	                            dirs.push_back(3);
+	                            dirs.push_back(2);
+	                            dirs.push_back(1);
+	                            dirs.push_back(0);
+	                        
+		                        bool died = 1;
+		                        
+		                         for(int i = 1; i <= NUM_SHIPS;  i++)
+			                     {
+			                     	if(ships1[i] != 0 )
+			                     	{
+			                       		 died = 0;       // У разі перемоги звкінчення роботи програми
+			                       		 break;
+			                        }
+			                   	 }
+								                           
+			                        if (died == 1)
+			                        {
+			                            winBot = 1;   	// У разі перемоги звкінчення роботи програми
+			                            break;
+			                        }
+	                                              
+	                        		cout << "Вбив" << endl;
+	                     }
+	                     else 
+	                     {
+	                         if(!dirs.empty())
+				                {
+				                    dir = dirs[dirs.size() - 1];
+				                    dirs.pop_back();
+				                }
+				                        
+				                xBot = firstHitX;
+				                yBot = firstHitY;
+				                
+				                cout << "Промах" <<endl;
+				         }
+				            
+			        }
+			            Sleep(1000);
+       			 } // Закінчення роботи бота
+                 system("cls");
+               	  
+            } while (resultShot != 0); //Поки не буде здійснено промах або в результаті перемоги одного з гравців програма закінчує роботу
+            
+            turn = !turn; //Переключення між гравцями
+        }
+        
+        if(winHuman == true)
+        {
+             cout << "Ви перемогли" <<endl;
+             
+        }
+        else if (winBot == true)
+        {
+           cout <<endl << "Цього разу перемiг бот, наступного разу у вас все вийде!" <<endl; 
+        }
+        
+    	getch();
+   	    system("cls");
+   	    break;
+	}
+		system("pause");
+		return 0;
+}
+
+
+void set_rand_ships(int map[N][N], int size_ship, int ship_id)
+{    
+	 int x, y;
+	 int dir = 0;
+	 int count_ship = 0;
+	 int count_tact = 0;
+	 while (count_ship < 1) 
+ 	{
+	 		count_tact++;
+	   
+		   if (count_tact > 1000)
+		   {
+		       break;
+		   }
+	   											// Випадково обирається клітинка з якої почнеться побудова корабля
+		   x = rand() % N;
+		   y = rand() % N;
+		
+		  int temp_x = x;
+		  int temp_y = y;
+												//Випадкова генерація напрямку побудови
+		   dir = rand() % 4;	
+		   bool setting_is_possible = 1;
+  												//Спочатку потрібно перевірити можна ставити корабель чи ні   
+		   for (int i = 0; i < size_ship; i++) 
+		   {		       
+		    	if (x < 0 || y < 0 || x >= N || y >= N) 
+				{
+		     		setting_is_possible = 0;
+		     		break;
+		    	}
+		    	
+			    if ( map[x][y]         >= 1 ||
+			         map[x][y + 1]     >= 1 ||
+			         map[x][y - 1]     >= 1 ||
+			         map[x + 1][y]     >= 1 ||
+			         map[x + 1][y + 1] >= 1 ||
+			         map[x + 1][y - 1] >= 1 ||
+			         map[x - 1][y]     >= 1 ||
+			         map[x - 1][y + 1] >= 1 ||
+			         map[x - 1][y - 1] >= 1)
+			    {
+			     setting_is_possible = 0;
+			     break;
+			    }
+			    
+			    switch (dir) 
+				{
+				    case 0:
+				     x++;
+				     break;
+				    case 1:
+				     y++;
+				     break;
+				    case 2:
+				     x--;
+				     break;
+				    case 3:
+				     y--;
+				     break;
+				}
+		   }  
+						// якщо є можливість поставити корабель ставимо		
+		  if (setting_is_possible == 1) 
+		  {		      
+			   x = temp_x;
+			   y = temp_y;
+			   
+			   for (int i = 0; i < size_ship; i++) 
+			   {
+			    	map[x][y] = ship_id;
+						    
+				    switch (dir) 
+					{
+					    case 0:
+					     x++;
+					     break;
+					    case 1:
+					     y++;
+					     break;
+					    case 2:
+					     x--;
+					     break;
+					    case 3:
+					     y--;
+					     break;		
+				    }
+			   }		  
+		   				count_ship++;
+		  }		  
+	}		 
+}
+
+void map_show(int map[N][N], int mask[N][N], bool useMask)
+{
+    // Виведення карти гравця та "Маску"(катру іншого гравця)
+    
+    cout << ' ';
+    for (int i = 0; i < N; i++) 
+    {
+        cout << i;
+    }
+    cout << endl;
+    
+ 	for (int i = 0; i < N; i++) 
+    {
+         cout << i;
+		          
+         for (int j = 0; j < N; j++)
+        {
+          	if(mask[j][i] == 1 || useMask == 0)
+         	{        
+	             if (map[j][i] == 0)
+	              {
+	                   cout << "-";
+	              }
+	              else if (map[j][i] == -1)
+	              {
+	                  cout << "X";
+	              }
+	              else if (map[j][i] == -2)
+	              {
+	                  cout << "#";
+	              }
+	               else 
+				   {
+	                	cout << map[j][i];
+	               }
+         	}   
+            else 
+            {
+                cout << "-";
+            }    
+        }    
+              
+            cout << "|"<< endl;
+    }
+    
+    cout << " ";
+    for (int i = 0; i < N; i++) 
+	{
+      cout << "-";
+    } cout << endl;
+    
+}
+
+void gotoxy (int x, int y)
+{
+    COORD p = { x,y };
+    SetConsoleCursorPosition(GetStdHandle( STD_OUTPUT_HANDLE ), p); // в цьому допомогла бібліотека windows
+}
+
+void ship_show(int x, int y, int dir, int size_ship)
+{    
+    for (int i = 0; i < size_ship; i++) 
+	{
+	    gotoxy(x+1,y+1);
+	    cout << '#';
+	    
+	    switch (dir) 
+		{
+		    case 0:
+		     x++;
+		     break;
+		    case 1:
+		     y++;
+		     break;
+		    case 2:
+		     x--;
+		     break;
+		    case 3:
+		     y--;
+		     break;	
+	    }
+    }
+    
+}
+
+bool ship_in_map(int x,int y,int dir,int size_ship)
+{    
+   bool in_map = 1;
+  //перевірка на можливість постановки корабля при ручній постановці
+  
+   for (int i = 0; i < size_ship; i++) 
+   {       
+	    if (x < 0 || y < 0 || x >= N || y >= N) 
+		{
+	     in_map = 0;
+	     break;
+	    }
+    
+	    switch (dir) 
+		{
+		    case 0:
+		     x++;
+		     break;
+		    case 1:
+		     y++;
+		     break;
+		    case 2:
+		     x--;
+		     break;
+		    case 3:
+		     y--;
+		     break;
+	    }
+   }
+   return in_map; 
+}
+
+bool set_ship(int map[N][N], int x, int y, int dir, int size_ship)
+{    
+  int temp_x = x;
+  int temp_y = y;
+   bool setting_is_possible = 1;
+  //ручна розстановка кораблів ( спочатку перевірка)
+  
+   for (int i = 0; i < size_ship; i++) 
+   {       
+	    if (x < 0 || y < 0 || x >= N || y >= N) 
+		{
+	     setting_is_possible = 0;
+	     break;
+	    }
+    
+	    if(map[x][y] >= 1) 
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+    
+	    if( y < N-1)
+	         if( map[x][y+1] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }	    
+	    
+	    if( y > 0)
+	         if( map[x][y-1] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    
+	    if( x < N-1)
+	         if( map[x+1][y] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    
+	    if( x < N-1 && y < N-1)
+	         if( map[x+1][y+1] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    
+	    if( x < N-1 && y > 0)
+	         if( map[x+1][y-1] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    
+	    if( x > 0)
+	         if( map[x-1][y] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    
+	    if( x > 0 && y < N-1)
+	         if( map[x-1][y+1] >= 1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    
+	    if( x > 0 && y > 0)
+	         if( map[x-1][y-1] >=1)
+	    {
+	     setting_is_possible = 0;
+	     break;
+	    }
+	    	    
+	    switch (dir) 
+		{
+		    case 0:
+		     x++;
+		     break;
+		    case 1:
+		     y++;
+		     break;
+		    case 2:
+		     x--;
+		     break;
+		    case 3:
+		     y--;
+		     break;
+	    }
+   }
+     									// Якщо можливо поставити корабель ставимо його
+	  if (setting_is_possible == 1) 
+	  {	      
+		   x = temp_x;
+		   y = temp_y;
+		   
+		   for (int i = 0; i < size_ship; i++) 
+		   {
+			    map[x][y] = Ships_id;
+			    
+			    switch (dir) 
+				{
+				    case 0:
+				     x++;
+				     break;
+				    case 1:
+				     y++;
+				     break;
+				    case 2:
+				     x--;
+				     break;
+				    case 3:
+				     y--;
+				     break;	
+	    		}
+	  	    }
+			   Ships[Ships_id] = size_ship;
+			   Ships_id++;
+	   
+	  }	 
+	   	return setting_is_possible;    
+}
+
+int shot(int map[N][N], int x, int y,int ships[NUM_SHIPS+1], int mask[N][N])
+{
+				// фунція пострілу
+    int result = 0;
+    
+    if( map[x][y] == -1 ||  map[x][y] == -2)
+    {
+     result = 3;   
+    }
+    else if(map[x][y]>=1)
+    {
+         ships[map[x][y]]--;
+         if(ships[map[x][y]] <= 0)
+         {
+         result = 2;
+         }
+     
+         else
+         {
+             result = 1;
+         }     
+       map[x][y] = -1;
+    }         
+        else 
+        {
+          map[x][y] = -2;  
+        }   
+		     
+        mask[x][y] = 1; 
+		       
+        return result;
+}
+
+int chek_coord(int x, int y)
+{		
+	if(x >= 48 && x < 58)
+	{
+		if(y >= 48 && y < 58)
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		return 2;
+	}
+}
